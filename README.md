@@ -26,7 +26,18 @@ razonamiento de arquitectura.
 
 - **Dashboard de métricas** — tarjetas con el total de estaciones, activas
   e inactivas, recalculadas en tiempo real.
-- **Búsqueda/filtro** de estaciones por nombre o código.
+- **Búsqueda/filtro** de estaciones por nombre o código, con atajo de
+  teclado `/` para enfocar el buscador desde cualquier parte de la página.
+- **Ordenar estaciones** por nombre (A-Z/Z-A) o por estado.
+- **Confirmación antes de inactivar** una estación — un modal accesible
+  (`role="alertdialog"`, foco atrapado, cierre con Esc) evita cambios
+  accidentales en la acción de mayor riesgo operativo. Reactivar, al ser
+  de bajo riesgo, no requiere confirmación.
+- **Manejo de deep-link inválido** — si la URL trae un `?station=<id>`
+  que no existe, se muestra un aviso claro en vez de un estado roto.
+- **Error Boundary** de nivel de aplicación — si algo falla de forma
+  inesperada en el árbol de componentes, se muestra una pantalla de
+  recuperación en vez de una página en blanco.
 - **Notificaciones toast** de éxito/error al cambiar el estado de una
   estación.
 - **Skeleton loaders** en el listado de estaciones y el panel de servicios
@@ -37,7 +48,11 @@ razonamiento de arquitectura.
   `?station=<id>`, para compartir el enlace directo o refrescar sin perder
   la selección.
 - **CI/CD con GitHub Actions** (`.github/workflows/ci.yml`) — corre lint,
-  tests y build en cada push/PR a `main`.
+  tests con cobertura y build en cada push/PR a `main`, y publica el
+  reporte de cobertura como artefacto descargable.
+- **Pre-commit hooks** (Husky + lint-staged) — cada commit local corre
+  ESLint automáticamente sobre los archivos modificados antes de
+  completarse.
 - **Espacio de marca en el header** — logo con fallback automático a un
   ícono genérico si el archivo no está presente (ver
   [`public/brand/README.md`](./public/brand/README.md) para agregar el
@@ -129,13 +144,16 @@ npm run lint
   mockea `services/api.ts` y valida `enabled`, éxito, error y — clave para
   el bug corregido — que un cambio de `stationId` dispara un nuevo fetch.
 - **Integración de página** (`src/pages/StationsPage.test.tsx`): dashboard
-  de métricas, búsqueda/filtro, deep-linking por URL, y toasts de éxito/error
-  al cambiar el estado de una estación.
+  de métricas, búsqueda/filtro, deep-linking por URL, el flujo completo de
+  confirmación al inactivar (incluyendo cancelar), y toasts de éxito/error.
 - **Extra — servicio** (`src/services/api.test.ts`): valida el join
   estación↔servicio, la persistencia del cambio de estado y la
   cancelación vía `AbortController`.
 
-19 tests en total, corriendo automáticamente en CI en cada push.
+21 tests en total (~90%+ de cobertura en la mayoría de módulos), corriendo
+automáticamente en CI en cada push. El reporte de cobertura completo se
+genera con `npm run test:coverage` y queda disponible como artefacto
+descargable en cada ejecución de GitHub Actions.
 
 ## Documentación adicional
 

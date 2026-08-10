@@ -70,7 +70,7 @@ describe('<StationsPage /> (integración)', () => {
     );
   });
 
-  it('muestra un toast de éxito al cambiar el estado de una estación', async () => {
+  it('pide confirmación al inactivar y muestra un toast de éxito al confirmar', async () => {
     const user = userEvent.setup();
     mocked.updateStationStatus.mockResolvedValue({
       ...stationsFixture[0],
@@ -86,11 +86,35 @@ describe('<StationsPage /> (integración)', () => {
     const switches = screen.getAllByRole('switch');
     await user.click(switches[0]);
 
+    // El modal de confirmación aparece y la mutación NO se dispara todavía.
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+    expect(mocked.updateStationStatus).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: /sí, inactivar/i }));
+
     await waitFor(() =>
       expect(
         screen.getByText(/Estación Prueba 1 ahora está inactiva/i),
       ).toBeInTheDocument(),
     );
+  });
+
+  it('cancelar el modal de confirmación no aplica ningún cambio', async () => {
+    const user = userEvent.setup();
+    render(<StationsPage />, { wrapper: TestAppProviders });
+
+    await waitFor(() =>
+      expect(screen.getByText('Estación Prueba 1')).toBeInTheDocument(),
+    );
+
+    const switches = screen.getAllByRole('switch');
+    await user.click(switches[0]);
+    expect(screen.getByRole('alertdialog')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /^cancelar$/i }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(mocked.updateStationStatus).not.toHaveBeenCalled();
   });
 
   it('muestra un toast de error si la actualización de estado falla', async () => {
@@ -105,11 +129,43 @@ describe('<StationsPage /> (integración)', () => {
 
     const switches = screen.getAllByRole('switch');
     await user.click(switches[0]);
+    await user.click(screen.getByRole('button', { name: /sí, inactivar/i }));
 
     await waitFor(() =>
       expect(
         screen.getByText(/No se pudo actualizar el estado de Estación Prueba 1/i),
       ).toBeInTheDocument(),
+    );
+  });
+
+  it('reactivar una estación inactiva no requiere confirmación', async () => {
+    const user = userEvent.setup();
+    mocked.fetchStations.mockResolvedValue([
+      { ...stationsFixture[0], status: 'inactive' as const },
+      stationsFixture[1],
+    ]);
+    mocked.updateStationStatus.mockResolvedValue({
+      ...stationsFixture[0],
+      status: 'active',
+    });
+
+    render(<StationsPage />, { wrapper: TestAppProviders });
+
+    await waitFor(() =>
+      expect(screen.getByText('Estación Prueba 1')).toBeInTheDocument(),
+    );
+
+    const switches = screen.getAllByRole('switch');
+    await user.click(switches[0]);
+
+    // No debe aparecer ningún modal: reactivar es de bajo riesgo.
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+
+    await waitFor(() =>
+      expect(mocked.updateStationStatus).toHaveBeenCalledWith({
+        stationId: '001',
+        status: 'active',
+      }),
     );
   });
 });

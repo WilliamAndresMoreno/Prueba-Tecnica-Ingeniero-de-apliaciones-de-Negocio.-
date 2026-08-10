@@ -102,6 +102,13 @@ input:focus-visible,
   margin: 0;
 }
 
+.stations-page__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 720px) {
   .stations-page__grid {
     grid-template-columns: 1fr;
@@ -498,4 +505,166 @@ input:focus-visible,
 
 .toast__close:hover {
   opacity: 1;
+}
+
+/* ---------- Ordenar estaciones ---------- */
+
+.station-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-muted);
+}
+
+.station-sort__select {
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.station-sort__select:focus-visible {
+  outline: none;
+}
+
+/* ---------- Dialog de confirmación ---------- */
+
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 32, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1100;
+  animation: dialog-fade-in 0.15s ease-out;
+}
+
+@keyframes dialog-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dialog {
+  background: var(--color-surface);
+  border-radius: 14px;
+  padding: 1.5rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 45px rgba(15, 20, 32, 0.25);
+}
+
+.dialog__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+}
+
+.dialog__icon--default {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.dialog__icon--danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.dialog__title {
+  margin: 0 0 0.4rem;
+  font-size: 1.1rem;
+}
+
+.dialog__description {
+  margin: 0 0 1.25rem;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.dialog__button {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.dialog__button--ghost {
+  background: none;
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.dialog__button--default {
+  background: var(--color-primary);
+  color: white;
+}
+
+.dialog__button--danger {
+  background: var(--color-danger);
+  color: white;
+}
+
+/* ---------- Error Boundary ---------- */
+
+.error-boundary {
+  max-width: 480px;
+  margin: 3rem auto;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.error-boundary__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  margin-bottom: 1rem;
+}
+
+.error-boundary__title {
+  margin: 0 0 0.5rem;
+}
+
+.error-boundary__description {
+  color: var(--color-muted);
+  margin: 0 0 1.25rem;
+}
+
+.error-boundary__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
 }

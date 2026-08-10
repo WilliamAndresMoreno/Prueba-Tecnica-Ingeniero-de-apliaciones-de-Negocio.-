@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStations } from '@/hooks/useStations';
 import { useUpdateStationStatus } from '@/hooks/useUpdateStationStatus';
 import { StationList } from '@/components/StationList/StationList';
@@ -6,7 +6,10 @@ import { ServicesPanel } from '@/components/ServicesPanel/ServicesPanel';
 import { Header } from '@/components/Header/Header';
 import { SummaryCards } from '@/components/SummaryCards/SummaryCards';
 import { StationSearch } from '@/components/StationSearch/StationSearch';
+import { StationSort, type SortOption } from '@/components/StationSort/StationSort';
+import { ConfirmDialog } from '@/components/ConfirmDialog/ConfirmDialog';
 import { useToast } from '@/components/Toast/toastContext';
+import type { Station } from '@/types';
 
 const URL_PARAM = 'station';
 
@@ -15,11 +18,30 @@ function getStationIdFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get(URL_PARAM);
 }
 
+function sortStations(stations: Station[], sort: SortOption): Station[] {
+  const sorted = [...stations];
+  switch (sort) {
+    case 'name-asc':
+      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    case 'name-desc':
+      return sorted.sort((a, b) => b.name.localeCompare(a.name));
+    case 'status-active-first':
+      return sorted.sort((a, b) => Number(b.status === 'active') - Number(a.status === 'active'));
+    case 'status-inactive-first':
+      return sorted.sort((a, b) => Number(a.status === 'active') - Number(b.status === 'active'));
+    default:
+      return sorted;
+  }
+}
+
 export function StationsPage() {
   const [selectedStationId, setSelectedStationId] = useState<string | null>(
     getStationIdFromUrl,
   );
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<SortOption>('name-asc');
+  const [pendingDeactivation, setPendingDeactivation] = useState<Station | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const stationsQuery = useStations();
   const updateStatusMutation = useUpdateStationStatus();
@@ -38,28 +60,46 @@ export function StationsPage() {
     window.history.replaceState({}, '', url);
   }, [selectedStationId]);
 
-  const selectedStation = stationsQuery.data?.find(
-    (s) => s.stationId === selectedStationId,
+  // Atajo de teclado "/" para saltar directo al buscador (Esc lo limpia,
+  // manejado dentro de StationSearch). No captura "/" si el foco ya está
+  // en un campo de texto, para no interferir con lo que el usuario escribe.
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isTyping = ['INPUT', 'TEXTAREA'].includes(target.tagName);
+      if (e.key === '/' && !isTyping) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const stations = useMemo(() => stationsQuery.data ?? [], [stationsQuery.data]);
+  const selectedStation = stations.find((s) => s.stationId === selectedStationId);
+
+  // Deep-link inválido: hay un stationId en la URL pero, una vez cargados
+  // los datos, no corresponde a ninguna estación real.
+  const isInvalidDeepLink = Boolean(
+    !stationsQuery.isPending && selectedStationId && !selectedStation,
   );
 
-  const filteredStations = useMemo(() => {
-    const stations = stationsQuery.data ?? [];
+  const visibleStations = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return stations;
-    return stations.filter(
-      (s) =>
-        s.name.toLowerCase().includes(term) || s.stationId.toLowerCase().includes(term),
-    );
-  }, [stationsQuery.data, search]);
+    const filtered = term
+      ? stations.filter(
+          (s) =>
+            s.name.toLowerCase().includes(term) ||
+            s.stationId.toLowerCase().includes(term),
+        )
+      : stations;
+    return sortStations(filtered, sort);
+  }, [stations, search, sort]);
 
-  const handleToggleStatus = (stationId: string) => {
-    const station = stationsQuery.data?.find((s) => s.stationId === stationId);
-    if (!station) return;
-
-    const nextStatus = station.status === 'active' ? 'inactive' : 'active';
-
+  const applyStatusChange = (station: Station, nextStatus: 'active' | 'inactive') => {
     updateStatusMutation.mutate(
-      { stationId, status: nextStatus },
+      { stationId: station.stationId, status: nextStatus },
       {
         onSuccess: () => {
           showToast(
@@ -74,6 +114,19 @@ export function StationsPage() {
     );
   };
 
+  const handleToggleStatus = (stationId: string) => {
+    const station = stations.find((s) => s.stationId === stationId);
+    if (!station) return;
+
+    if (station.status === 'active') {
+      // Inactivar es la acción de mayor riesgo operativo: pide confirmación.
+      setPendingDeactivation(station);
+      return;
+    }
+
+    applyStatusChange(station, 'active');
+  };
+
   return (
     <div className="app-shell">
       <Header />
@@ -83,16 +136,27 @@ export function StationsPage() {
           Selecciona una estación para consultar los servicios que ofrece.
         </p>
 
-        <SummaryCards stations={stationsQuery.data ?? []} />
+        <SummaryCards stations={stations} />
 
         <div className="stations-page__grid">
           <section aria-labelledby="stations-heading">
             <div className="stations-page__section-header">
               <h2 id="stations-heading">Estaciones</h2>
-              <StationSearch value={search} onChange={setSearch} />
+              <div className="stations-page__controls">
+                <StationSearch value={search} onChange={setSearch} inputRef={searchInputRef} />
+                <StationSort value={sort} onChange={setSort} />
+              </div>
             </div>
+
+            {isInvalidDeepLink && (
+              <p role="alert" className="error-text" style={{ marginTop: 0 }}>
+                No encontramos la estación solicitada en el enlace. Selecciona una de la
+                lista.
+              </p>
+            )}
+
             <StationList
-              stations={filteredStations}
+              stations={visibleStations}
               isLoading={stationsQuery.isPending}
               isError={stationsQuery.isError}
               errorMessage={stationsQuery.error?.message}
@@ -108,9 +172,32 @@ export function StationsPage() {
             />
           </section>
 
-          <ServicesPanel stationId={selectedStationId} stationName={selectedStation?.name} />
+          <ServicesPanel
+            stationId={isInvalidDeepLink ? null : selectedStationId}
+            stationName={selectedStation?.name}
+          />
         </div>
       </main>
+
+      <ConfirmDialog
+        open={pendingDeactivation !== null}
+        tone="danger"
+        title="¿Inactivar esta estación?"
+        description={
+          pendingDeactivation
+            ? `${pendingDeactivation.name} (código ${pendingDeactivation.stationId}) dejará de mostrarse como activa. Puedes reactivarla en cualquier momento.`
+            : ''
+        }
+        confirmLabel="Sí, inactivar"
+        cancelLabel="Cancelar"
+        onCancel={() => setPendingDeactivation(null)}
+        onConfirm={() => {
+          if (pendingDeactivation) {
+            applyStatusChange(pendingDeactivation, 'inactive');
+          }
+          setPendingDeactivation(null);
+        }}
+      />
     </div>
   );
 }
