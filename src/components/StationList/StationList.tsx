@@ -1,5 +1,6 @@
 import type { Station } from '@/types';
 import { StationCard } from './StationCard';
+import { StationListSkeleton } from '@/components/Skeletons/Skeletons';
 
 interface StationListProps {
   stations: Station[];
@@ -10,6 +11,7 @@ interface StationListProps {
   onSelect: (stationId: string) => void;
   onToggleStatus: (stationId: string) => void;
   togglingStationId?: string | null;
+  isFiltered?: boolean;
 }
 
 export function StationList({
@@ -21,9 +23,10 @@ export function StationList({
   onSelect,
   onToggleStatus,
   togglingStationId,
+  isFiltered,
 }: StationListProps) {
   if (isLoading) {
-    return <p role="status">Cargando estaciones…</p>;
+    return <StationListSkeleton />;
   }
 
   if (isError) {
@@ -35,7 +38,13 @@ export function StationList({
   }
 
   if (stations.length === 0) {
-    return <p>No hay estaciones registradas.</p>;
+    return (
+      <p role="status">
+        {isFiltered
+          ? 'No hay estaciones que coincidan con tu búsqueda.'
+          : 'No hay estaciones registradas.'}
+      </p>
+    );
   }
 
   return (

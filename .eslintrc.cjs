@@ -17,4 +17,15 @@ module.exports = {
     ],
     '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
   },
+  overrides: [
+    {
+      // Los archivos de utilidades de test exportan helpers junto a
+      // componentes wrapper a propósito; react-refresh no aplica aquí
+      // porque nunca se sirven vía HMR del navegador.
+      files: ['src/test/**/*.tsx', '**/*.test.tsx', '**/*.test.ts'],
+      rules: {
+        'react-refresh/only-export-components': 'off',
+      },
+    },
+  ],
 };

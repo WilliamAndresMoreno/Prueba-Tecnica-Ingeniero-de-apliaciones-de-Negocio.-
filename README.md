@@ -22,12 +22,39 @@ a partir de los datos de ejemplo del enunciado. Ver
 [`docs/DECISIONES_TECNICAS.md`](./docs/DECISIONES_TECNICAS.md) para el
 razonamiento de arquitectura.
 
+## Funcionalidades adicionales (más allá del enunciado base)
+
+- **Dashboard de métricas** — tarjetas con el total de estaciones, activas
+  e inactivas, recalculadas en tiempo real.
+- **Búsqueda/filtro** de estaciones por nombre o código.
+- **Notificaciones toast** de éxito/error al cambiar el estado de una
+  estación.
+- **Skeleton loaders** en el listado de estaciones y el panel de servicios
+  mientras cargan los datos.
+- **Modo oscuro** persistente (`localStorage`), con detección de la
+  preferencia del sistema operativo como valor inicial.
+- **Deep-linking por URL** — la estación seleccionada queda reflejada en
+  `?station=<id>`, para compartir el enlace directo o refrescar sin perder
+  la selección.
+- **CI/CD con GitHub Actions** (`.github/workflows/ci.yml`) — corre lint,
+  tests y build en cada push/PR a `main`.
+- **Espacio de marca en el header** — logo con fallback automático a un
+  ícono genérico si el archivo no está presente (ver
+  [`public/brand/README.md`](./public/brand/README.md) para agregar el
+  logo oficial).
+
 ## Arquitectura por capas
 
 ```
 src/
 ├── pages/            # Composición de pantallas (StationsPage)
 ├── components/        # UI presentacional, por feature
+│   ├── Header/            # Marca, logo (con fallback) y toggle de tema
+│   ├── SummaryCards/       # Dashboard de métricas (total/activas/inactivas)
+│   ├── StationSearch/      # Buscador/filtro de estaciones
+│   ├── Skeletons/          # Loading skeletons
+│   ├── Toast/              # Sistema de notificaciones (contexto + provider)
+│   ├── Theme/              # Modo claro/oscuro (contexto + provider)
 │   ├── StationList/
 │   ├── ServicesPanel/
 │   └── StatusToggle/
@@ -101,9 +128,14 @@ npm run lint
 - **Hook con mock de API** (`src/hooks/useStationServices.test.tsx`):
   mockea `services/api.ts` y valida `enabled`, éxito, error y — clave para
   el bug corregido — que un cambio de `stationId` dispara un nuevo fetch.
+- **Integración de página** (`src/pages/StationsPage.test.tsx`): dashboard
+  de métricas, búsqueda/filtro, deep-linking por URL, y toasts de éxito/error
+  al cambiar el estado de una estación.
 - **Extra — servicio** (`src/services/api.test.ts`): valida el join
   estación↔servicio, la persistencia del cambio de estado y la
   cancelación vía `AbortController`.
+
+19 tests en total, corriendo automáticamente en CI en cada push.
 
 ## Documentación adicional
 

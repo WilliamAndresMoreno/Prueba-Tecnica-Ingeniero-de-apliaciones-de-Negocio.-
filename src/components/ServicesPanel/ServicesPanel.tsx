@@ -1,6 +1,7 @@
 import { useStationServices } from '@/hooks/useStationServices';
 import { isServiceKey } from '@/services/mockData';
 import { ServiceIcon } from './ServiceIcon';
+import { ServicesPanelSkeleton } from '@/components/Skeletons/Skeletons';
 
 interface ServicesPanelProps {
   stationId: string | null;
@@ -29,7 +30,12 @@ export function ServicesPanel({ stationId, stationName }: ServicesPanelProps) {
         Servicios {stationName ? `— ${stationName}` : ''}
       </h2>
 
-      {isPending && <p role="status">Cargando servicios…</p>}
+      {isPending && (
+        <div role="status">
+          <span className="visually-hidden">Cargando servicios…</span>
+          <ServicesPanelSkeleton />
+        </div>
+      )}
 
       {isError && (
         <p role="alert" className="error-text">
