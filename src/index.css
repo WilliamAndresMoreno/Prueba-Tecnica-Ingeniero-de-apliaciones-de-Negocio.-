@@ -668,3 +668,31 @@ input:focus-visible,
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ---------- Exportar CSV ---------- */
+
+.export-csv-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.export-csv-button:hover:not(:disabled) {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.export-csv-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

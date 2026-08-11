@@ -53,6 +53,16 @@ razonamiento de arquitectura.
 - **Pre-commit hooks** (Husky + lint-staged) — cada commit local corre
   ESLint automáticamente sobre los archivos modificados antes de
   completarse.
+- **Tests de accesibilidad automatizados** (`jest-axe`) sobre la página
+  principal, el modal de confirmación y las tarjetas de estación — corren
+  como parte de la suite normal de tests.
+- **Exportar a CSV** — botón que descarga el listado de estaciones tal
+  como se está viendo (respeta el filtro y el orden activos).
+- **Plantillas de PR/Issue** y **Dependabot** — higiene de repositorio
+  estándar en equipos profesionales (`.github/PULL_REQUEST_TEMPLATE.md`,
+  `.github/ISSUE_TEMPLATE/`, `.github/dependabot.yml`).
+- **`CHANGELOG.md`** siguiendo el formato
+  [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - **Espacio de marca en el header** — logo con fallback automático a un
   ícono genérico si el archivo no está presente (ver
   [`public/brand/README.md`](./public/brand/README.md) para agregar el
@@ -146,11 +156,18 @@ npm run lint
 - **Integración de página** (`src/pages/StationsPage.test.tsx`): dashboard
   de métricas, búsqueda/filtro, deep-linking por URL, el flujo completo de
   confirmación al inactivar (incluyendo cancelar), y toasts de éxito/error.
+- **Accesibilidad** (`src/test/a11y.test.tsx`): `jest-axe` corre reglas
+  WCAG sobre la página principal, el modal de confirmación y las tarjetas
+  de estación — atrapa regresiones estructurales (labels, roles ARIA,
+  etc.) automáticamente en cada corrida de tests.
+- **Exportación CSV** (`src/services/csvExport.test.ts`): valida el
+  encabezado, el mapeo de estado a texto legible, y el escape correcto de
+  valores con comas.
 - **Extra — servicio** (`src/services/api.test.ts`): valida el join
   estación↔servicio, la persistencia del cambio de estado y la
   cancelación vía `AbortController`.
 
-21 tests en total (~90%+ de cobertura en la mayoría de módulos), corriendo
+27 tests en total (~90%+ de cobertura en la mayoría de módulos), corriendo
 automáticamente en CI en cada push. El reporte de cobertura completo se
 genera con `npm run test:coverage` y queda disponible como artefacto
 descargable en cada ejecución de GitHub Actions.

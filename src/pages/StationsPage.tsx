@@ -7,6 +7,7 @@ import { Header } from '@/components/Header/Header';
 import { SummaryCards } from '@/components/SummaryCards/SummaryCards';
 import { StationSearch } from '@/components/StationSearch/StationSearch';
 import { StationSort, type SortOption } from '@/components/StationSort/StationSort';
+import { ExportCsvButton } from '@/components/ExportCsvButton/ExportCsvButton';
 import { ConfirmDialog } from '@/components/ConfirmDialog/ConfirmDialog';
 import { useToast } from '@/components/Toast/toastContext';
 import type { Station } from '@/types';
@@ -145,6 +146,7 @@ export function StationsPage() {
               <div className="stations-page__controls">
                 <StationSearch value={search} onChange={setSearch} inputRef={searchInputRef} />
                 <StationSort value={sort} onChange={setSort} />
+                <ExportCsvButton stations={visibleStations} />
               </div>
             </div>
 
